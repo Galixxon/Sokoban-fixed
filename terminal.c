@@ -1,67 +1,68 @@
 #include "headers/terminal.h"
+#include "headers/logic.h"
 #include <ncurses.h>
 
 //Basic Drawing
-void printMap(field **arr, int w, int h, movable_t *pl, movable_t *boxes, int numofboxes)
+void printMap(char **arr, int w, int h, movable *pl, movable *boxes, int numofboxes)
 {
-    char pl_temp = pl->pos->digit;
+    char pl_temp = pl->digit;
     char boxes_temp[numofboxes];
-    pl->pos->digit = 'P';
+    pl->digit = 'P';
 
     for(int i = 0; i < numofboxes; i++)
     {
-        boxes_temp[i] = boxes[i].pos->digit;
-        boxes[i].pos->digit = 'O';
+        boxes_temp[i] = boxes[i].digit;
+        boxes[i].digit = 'O';
     }
     for(int i = 0; i < h; i++)
     {
         for(int j = 0; j < w; j++)
         {
-            putchar(arr[i][j].digit);
+            putchar(arr[i][j]);
         }
         putchar('\n');
     }
-    pl->pos->digit = pl_temp;
+    pl->digit = pl_temp;
     for(int i = 0; i < numofboxes; i++)
     {
-        boxes[i].pos->digit = boxes_temp[i];
+        boxes[i].digit = boxes_temp[i];
     }
 }
 //--------------------------------------------------------------
 
-move_t getPlayerInput()
+int getPlayerInput()
 {
     char* c = malloc(sizeof(char));
-    move_t m;
+    int m;
     fgets(c,4,stdin);
-    switch (c[0])
+    switch (*c)
     {
     case 'U':
-        m = UP;
+        m = 1;
         break;
     
     case 'D':
-        m = DOWN;
+        m = 2;
         break;
 
     case 'L':
-        m = LEFT;
+        m = 3;
         break;
 
     case 'R':
-        m = RIGHT;
+        m = 4;
         break;
     case 'Q':
-        m = QUIT;
+        m = 5;
         break;
     case 'P':
-        m = RESET;
+        m = 6;
         break;
     }
     free(c);
     return m;
 }
-
+/**
 level* levelSelection()
 {
     level *chosen = NULL;
@@ -94,9 +95,10 @@ level* levelSelection()
     delwin(selection_win);
     return chosen;
 }
-
+**/
 int main()
 {
+    /**
     WINDOW *win;
     int startx, starty, width, height;
     initscr();
@@ -104,8 +106,9 @@ int main()
 
     keypad(stdscr,TRUE);
     refresh();
-
+    
     level *actualLevel = levelSelection();
+    
     if(actualLevel == NULL)
     {
         printw("Error, could not read a level");
@@ -117,4 +120,13 @@ int main()
     int *numOfBoxes = actualLevel->numOfBoxes;
     movable_t *player = actualLevel->playerinfo;
     movable_t *boxes = actualLevel->boxes;
+    **/
+   level* actualLevel = malloc(sizeof(level));
+   
+   int move; 
+   while((move= getPlayerInput())!= 5)
+   {
+       
+   }
+   return 0;
 }

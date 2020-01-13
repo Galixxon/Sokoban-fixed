@@ -1,26 +1,25 @@
-typedef enum fieldType {EMPTY, FLOOR, WALL, HOLE} field_t;
-typedef enum movemevt {NONE, UP, DOWN, LEFT,RIGHT, RESET, QUIT} move_t;
-
-typedef struct field
-{
-    int x,y;
-    char digit;
-    field_t fieldType;
-}field;
-
 typedef struct movable
 {
-    field *pos;
-}movable_t;
+    char digit;
+    int x;
+    int y;
+}movable;
 
-
-typedef struct levelinfo
+typedef struct levelOverview
 {
+    char *name;
+    char **map;
+    int index;
+}lOverview;
+
+typedef struct level
+{
+    int index;
+    char* name;
+    char **map;
     int height;
     int width;
-    int numOfBoxes;
-    movable_t *playerinfo;
-    movable_t *boxes;
-    field **map;
-    bool completed;
+    int num_of_boxes;
+    movable player;
+    movable *boxes;
 }level;

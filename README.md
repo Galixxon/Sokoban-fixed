@@ -26,6 +26,9 @@ Logika:
 	. Typy pól: puste, do chodzenia, ściana, dziura na skrzynie
 	. Wskaźniki: gracz, skrzynie
 
+
+Źródło map: https://www.sourcecode.se/sokoban/levels
+
 ----------------------------------------------------------
 logic:
 	. File Handling
@@ -38,6 +41,40 @@ graphic:
 	. Display -> Init-Display()
 	
 
+
+
+5. 	Zaprogramować w miarę prostą grę np. sokoban, może to być też inna znana gra ale z jakimiś
+	oryginalnymi modyfikacjami kształtów lub logiki. Gra powinna być napisana w taki sposób aby
+	rozdzielić logikę od wyświetlania i napisać dwie wersje wyświetlania: graficzną przy użyciu
+	biblioteki SDL i tekstową działającą na terminalu. Obie wersje mają mieć te same moduły (pliki
+	.c) z logiką, a różne tylko moduły do wyświetlania (SDL/text) np. zawierające funkcje Init-
+	Display(), UpdateDisplay(). W zależności co linkujemy to otrzymamy wersje tekstową
+	(ncurses) lub graficzną (SDL).
+
+
+
+pliki: mapy.txt
+
+1.Level select: 
+	-> Wczytaj z pliku listę poziomów:
+		-> Czytaj linia po linii aż do ';' z pliku maps.txt
+		-> Licz linie by znaleźć wysokość
+		-> 
+	-> Narysuj okno wyboru (zależnie od grafiki)
+	-> Pozwól ruszać wskaźnikiem wyboru
+	-> Pobierz dane wybranego poziomu i zapisz w pamięci
+	-> Rozpocznij grę z tym poziomem
+
+2.Game process:
+	-> Pobierz ruch od gracza
+	-> Sprawdź na jakie pole chce przejść gracz
+	-> Sprawdź czy to pole jest podłogą
+	-> Sprawdź czy jest tam skrzynia
+	-> Sprawdź czy można ją przesunąć
+	-> Jeżeli można to przesuń skrzynię i przejdź na jej pole
+
+3.Game finish:
+	-> Jeżeli przesunięto skrzynię to sprawdź czy wszystkie są na swoich miejcach
 
 
 

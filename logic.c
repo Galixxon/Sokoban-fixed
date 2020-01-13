@@ -5,250 +5,102 @@
 
 #include "headers/logic.h"
 
-#define PATH "assets/maps.txt"
 
-static field* canMove(const move_t dir, movable_t *object, const int max_x, const int max_y, field **map)
+//Gameplay functions
+
+static movable* checkForBox(movable *boxes, int numOfBoxes, const int x, const int y)
 {
-    int x = object->pos->x;
-    int y = object->pos->y;
-    int new_x = x, new_y = y;
-    field* moveField = NULL;
-    switch (dir)
+    movable* potentialBox = NULL;
+    for(int i = 0; i < numOfBoxes; i++)
     {
-    case UP:
-        new_y = y-1;
-        if(new_y < 0) new_y = 0;
-        break;
-    
-    case DOWN:
-        new_y = y+1;
-        if(new_y >= max_y) new_y = max_y-1;
-        break;
-
-    case LEFT:
-        new_x = x-1;
-        if(new_x < 0) new_x = 0;
-        break;
-    
-    case RIGHT:
-        new_x = x+1;
-        if(new_x >= max_x) new_x = max_x;
-        break;
-
-    default:
-        break;
-    }
-    field *temp = &(map[new_y][new_x]);
-        
-    switch (temp->digit)
-    {
-    case '#':
-        moveField = NULL;
-        break;
-    case '.':
-        moveField = temp;
-        break;
-    case 'x':
-        moveField = temp;
-        break;
-    default:
-        moveField = NULL;
-        break;
-    }
-
-    return moveField;
-}
-static movable_t* checkForBox(movable_t boxes[], field *f, int numOfBoxes)
-{
-    movable_t *box = NULL;
-    for(int i = 0; i< numOfBoxes; i++)
-    {
-        if(boxes[i].pos == f)
+        if(boxes[i].x == x && boxes[i].y == y)
         {
-            box = &(boxes[i]);
+            potentialBox = &(boxes[i]);
         }
     }
-    return box;
+    return potentialBox;
 }
 
 
-static bool checkWinCon(movable_t boxes[], int numOfboxes)
+static int checkWinCon(movable *boxes, int numOfboxes)
 {
-    bool completed = true;
+    int completed = 1;
     for(int i = 0; i < numOfboxes; i++)
     {
-        if(boxes[i].pos->fieldType != HOLE)
+        if(boxes[i].digit != '.')
         {
-            completed = false;
+            completed = 0;
             break;
         }
     }
     return completed;
 }
 
-int getLevemAmount()
+
+
+int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes, int height, int width)
 {
-    int counter= 0;
-    FILE *fp;
-    fp = fopen(PATH,"r");
-    char c;
-    
-    fclose(fp);
-}
-
-
-level *getLevelInfo(const int index)
-{
-    level *l = malloc(sizeof(level));
-    char ch = 0;
-    FILE *fp;
-    fp = fopen(PATH,"r");
-
-    int level;
-    int height,width,boxes;
-    while(ch != EOF)
+    int state = 0;
+    int x = player->x;
+    int y = player->y;
+    int new_x = x, new_y = y;
+    int box_x, box_y;
+    int ret = 0;
+    switch (move)
     {
-        ch = fgetc(fp);
-        while(ch != '?')
-        {
-            ch = fgetc(fp);
-        }
-        fscanf(fp,"%d",&level);
-        if(level == index)
-        {
-            break;
-        }
+    case 1:
+        new_y = y-1;
+        box_y = new_y-1;
+        if(new_y < 0) new_y = 0;
+        break;
+    
+    case 2:
+        new_y = y+1;
+        box_y = new_y+1;
+        if(new_y >= height) new_y = height-1;
+        break;
+
+    case 3:
+        new_x = x-1;
+        box_x = new_x-1;
+        if(new_x < 0) new_x = 0;
+        break;
+    
+    case 4:
+        new_x = x+1;
+        box_x = new_x+1;
+        if(new_x >= width) new_x = width-1;
+        break;
+
+    default:
+        break;
     }
-    if(level != index) return NULL;
-    
-    fscanf(fp,"%d%d%d", &height, &width, &boxes);
-    ch = fgetc(fp);
 
-    l->completed = false;
-    l->height = height;
-    l->width = width;
-    l->numOfBoxes = boxes;
-    l->playerinfo = malloc(sizeof(movable_t));
-    l->map = malloc(sizeof(field*) * height);
 
-    for(int i = 0; i < height; i++)
+    if(map[new_y][new_x] != '#')
     {
-        l->map[i] = malloc(sizeof(field) * width);
-    }
-    l->boxes = malloc(sizeof(movable_t) * boxes);
-    int temp = 0;
-    for(int i = 0; i < height; i++)
-    {
-        for(int j = 0; j <= width; j++)
+        movable* box = checkForBox(*boxes, numOfBoxes, new_x, new_y);
+        if(box == NULL)
         {
-            ch=fgetc(fp);
-            if(ch != '\n')
-            {
-                l->map[i][j].digit = ch;
-                l->map[i][j].y = i;
-                l->map[i][j].x = j;
-                switch (ch)
-                {
-                    case ' ':
-                        l->map[i][j].fieldType = EMPTY;
-                        break;
-                    case '.':
-                        l->map[i][j].fieldType = FLOOR;
-                        break;
-                    case '#':
-                        l->map[i][j].fieldType = WALL;
-                        break;
-                    case 'x':
-                        l->map[i][j].fieldType = HOLE;
-                        break;
-                    case 'P':
-                        l->playerinfo->pos = &(l->map[i][j]);
-                        l->map[i][j].fieldType = FLOOR;
-                        l->map[i][j].digit = '.';
-                        break;
-                    case 'o':
-                        l->boxes[temp].pos = &(l->map[i][j]);
-                        l->map[i][j].fieldType = FLOOR;
-                        l->map[i][j].digit = '.';
-                        temp++;
-                        break;
-                    case 'I':
-                        l->boxes[temp].pos = &(l->map[i][j]);
-                        l->map[i][j].fieldType = HOLE;
-                        l->map[i][j].digit = 'o';
-                        temp++;
-                        break;
-                    default:
-                        break;
-                }
-            }   
+            player->x = new_x;
+            player->y = new_y;
         }
-    }
-    fclose(fp);
-    return l;
-}
-
-void mainLoop(level *actualLevel)
-{
-    int *height = actualLevel->height;
-    int *width = actualLevel->width;
-    field **map = actualLevel->map;
-    int *numOfBoxes = actualLevel->numOfBoxes;
-    movable_t *player = actualLevel->playerinfo;
-    movable_t *boxes = actualLevel->boxes;
-    move_t move;
-    
-    printMap(map, width,height,player,boxes,numOfBoxes);
-    
-    while(actualLevel->completed==false)
-    {
-        
-        move = getPlayerInput();
-        system("clear");            
-        if(move == QUIT){ break;}
         else
         {
-            field *playerField = canMove(move,player,width,height,map);
-            if(playerField != NULL)
+            movable* box2 =  checkForBox(*boxes, numOfBoxes, box_x, box_y);
+            if(box == NULL)
             {
-                movable_t *box = checkForBox(boxes,playerField,numOfBoxes);
-                if(box != NULL)
+                box->x = box_x;
+                box->y = box_y;
+                if(map[box_y][box_x] == ".")
                 {
-                    field *boxField = canMove(move,box,width,height,map);
-                    if(boxField != NULL)
-                    {
-                        movable_t *otherbox = checkForBox(boxes,boxField,numOfBoxes);
-                        if(otherbox == NULL)
-                        {
-                            box->pos = boxField;
-                            player->pos = playerField;
-                            actualLevel->completed = checkWinCon(boxes,numOfBoxes);
-                        }
-                    }
+                    state = (checkWinCon(*boxes,numOfBoxes));
                 }
-                else
-                {
-                    player->pos = playerField;
-                }
+                player->x = new_x;
+                player->y = new_y;
             }
         }
-        printMap(map, width,height,player,boxes,numOfBoxes);
     }
-    system("clear");
-    //printf("Game finished.\n");
-
-    free(player);
-    for(int i = 0; i < height; i++)
-    {
-        free(map[i]);
-    }
-    free(map);
-    free(boxes);
-    free(actualLevel);
-
-
-    //system("clear");
-    //printMap(map, width,height,player,boxes,numOfBoxes);
-
-    
+    return state;
 }
+
