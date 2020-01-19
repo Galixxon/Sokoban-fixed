@@ -3,12 +3,11 @@
 #include<stdbool.h>
 #include<string.h>
 
-#include "headers/logic.h"
-
+#include "logic.h"
 
 //Gameplay functions
 
-static movable* checkForBox(movable *boxes, int numOfBoxes, const int x, const int y)
+movable* checkForBox(movable *boxes, int numOfBoxes, const int x, const int y)
 {
     movable* potentialBox = NULL;
     for(int i = 0; i < numOfBoxes; i++)
@@ -22,12 +21,12 @@ static movable* checkForBox(movable *boxes, int numOfBoxes, const int x, const i
 }
 
 
-static int checkWinCon(movable *boxes, int numOfboxes)
+int checkWinCon(char **map, movable *boxes, int numOfboxes)
 {
     int completed = 1;
     for(int i = 0; i < numOfboxes; i++)
     {
-        if(boxes[i].digit != '.')
+        if(map[boxes[i].y][boxes[i].x] != '.')
         {
             completed = 0;
             break;
@@ -36,16 +35,25 @@ static int checkWinCon(movable *boxes, int numOfboxes)
     return completed;
 }
 
+void reset(movable *player, movable *startingPlayer, movable *boxes, movable *startingboxes, int numOfboxes)
+{
+    player->x = startingPlayer->x;
+    player->y = startingPlayer->y;
+    for(int i = 0; i < numOfboxes; i++)
+    {
+        boxes[i].x = startingboxes[i].x;
+        boxes[i].y = startingboxes[i].y;
+    }
+}
 
 
-int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes, int height, int width)
+int step(int move, char **map, movable *player, movable *boxes, int numOfBoxes, int height, int width)
 {
     int state = 0;
     int x = player->x;
     int y = player->y;
     int new_x = x, new_y = y;
-    int box_x, box_y;
-    int ret = 0;
+    int box_x = new_x, box_y = new_y;
     switch (move)
     {
     case 1:
@@ -79,7 +87,7 @@ int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes,
 
     if(map[new_y][new_x] != '#')
     {
-        movable* box = checkForBox(*boxes, numOfBoxes, new_x, new_y);
+        movable* box = checkForBox(boxes, numOfBoxes, new_x, new_y);
         if(box == NULL)
         {
             player->x = new_x;
@@ -87,14 +95,14 @@ int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes,
         }
         else
         {
-            movable* box2 =  checkForBox(*boxes, numOfBoxes, box_x, box_y);
-            if(box == NULL)
+            movable* box2 =  checkForBox(boxes, numOfBoxes, box_x, box_y);
+            if(box2 == NULL && map[box_y][box_x] != '#')
             {
                 box->x = box_x;
                 box->y = box_y;
-                if(map[box_y][box_x] == ".")
+                if(map[box_y][box_x] == '.')
                 {
-                    state = (checkWinCon(*boxes,numOfBoxes));
+                    state = (checkWinCon(map,boxes,numOfBoxes));
                 }
                 player->x = new_x;
                 player->y = new_y;

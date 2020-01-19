@@ -1,132 +1,124 @@
-#include "headers/terminal.h"
-#include "headers/logic.h"
-#include <ncurses.h>
+#include "terminal.h"
 
-//Basic Drawing
-void printMap(char **arr, int w, int h, movable *pl, movable *boxes, int numofboxes)
+#include <stdlib.h>
+#include <menu.h>
+#include <string.h>
+
+void UpdateDisplay(WINDOW *win, char **arr, int w, int h, movable *pl, movable *boxes, int numofboxes)
 {
-    char pl_temp = pl->digit;
-    char boxes_temp[numofboxes];
-    pl->digit = 'P';
-
+    wmove(win,0,0);
+    wrefresh(win);
+    char tempPlayer = arr[pl->y][pl->x];
+    char tempBoxes[numofboxes];
+    char boxChar = boxes[0].digit;
     for(int i = 0; i < numofboxes; i++)
     {
-        boxes_temp[i] = boxes[i].digit;
-        boxes[i].digit = 'O';
+        tempBoxes[i] = arr[boxes[i].y][boxes[i].x];
+        arr[boxes[i].y][boxes[i].x] = boxChar;
     }
+
+    arr[pl->y][pl->x] = pl->digit;
+
+    //Drawing
+    for(int i = 0; i < numofboxes; i++)
+    {
+        arr[boxes[i].y][boxes[i].x] = boxes[i].digit;
+    }
+
     for(int i = 0; i < h; i++)
     {
         for(int j = 0; j < w; j++)
         {
-            putchar(arr[i][j]);
+            waddch(win,arr[i][j]);
         }
-        putchar('\n');
     }
-    pl->digit = pl_temp;
+    wrefresh(win);
+    arr[pl->y][pl->x] = tempPlayer;
+
     for(int i = 0; i < numofboxes; i++)
     {
-        boxes[i].digit = boxes_temp[i];
+        arr[boxes[i].y][boxes[i].x] = tempBoxes[i];
     }
 }
 //--------------------------------------------------------------
 
 int getPlayerInput()
 {
-    char* c = malloc(sizeof(char));
+    int c = getch();
     int m;
-    fgets(c,4,stdin);
-    switch (*c)
+    switch (c)
     {
-    case 'U':
+    case KEY_UP:
         m = 1;
         break;
     
-    case 'D':
+    case KEY_DOWN:
         m = 2;
         break;
 
-    case 'L':
+    case KEY_LEFT:
         m = 3;
         break;
 
-    case 'R':
+    case KEY_RIGHT:
         m = 4;
         break;
-    case 'Q':
+    case 'q':
         m = 5;
         break;
-    case 'P':
+    case 'p':
         m = 6;
         break;
     }
-    free(c);
     return m;
 }
-/**
-level* levelSelection()
-{
-    level *chosen = NULL;
-    int height = 10;
-    int width = 10;
-    int startx = (LINES - height)/2;
-    int starty = (COLS - width)/2;
-    WINDOW *selection_win;
-    selection_win = newwin(height,width,starty,startx);
-    box(selection_win,0,0);
-    wrefresh(selection_win);
 
-    int ch;
-    while(ch = getch() != KEY_F(1) && chosen == NULL)
-    {
-        switch (ch)
-        {
-        case KEY_UP:
-            break;
-        case KEY_DOWN:
-            break;
-        case KEY_ENTER:
-            break;
-        default:
-            break;
-        }
-    }
-    wborder(selection_win,' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-    wrefresh(selection_win);
-    delwin(selection_win);
-    return chosen;
-}
-**/
-int main()
-{
-    /**
-    WINDOW *win;
-    int startx, starty, width, height;
-    initscr();
-    cbreak();
 
-    keypad(stdscr,TRUE);
-    refresh();
-    
-    level *actualLevel = levelSelection();
-    
+void gameLoop(int index)
+{
+    level* actualLevel = getLevelInfo(index);
     if(actualLevel == NULL)
     {
-        printw("Error, could not read a level");
+        wprintw(stdscr, "Could not load a level. Press any key to exit");
+        getch();
         return;
     }
-    int *height = actualLevel->height;
-    int *width = actualLevel->width;
-    field **map = actualLevel->map;
-    int *numOfBoxes = actualLevel->numOfBoxes;
-    movable_t *player = actualLevel->playerinfo;
-    movable_t *boxes = actualLevel->boxes;
-    **/
-   level* actualLevel = malloc(sizeof(level));
-   
-   int move; 
-   while((move= getPlayerInput())!= 5)
-   {
-       
-   }
-   return 0;
+    int window_width = actualLevel->width;
+    int window_height = actualLevel->height;
+    int window_x = (COLS - window_width)/2;
+    int window_y = (LINES - window_height)/2;
+    WINDOW *win = newwin(window_height,window_width,window_y,window_x);
+
+    wborder(win, 0,0,0,0,0,0,0,0);
+    int move = 0;
+    int state = 0;
+
+    UpdateDisplay(win,actualLevel->map,actualLevel->width,actualLevel->height,actualLevel->player,actualLevel->boxes, actualLevel->num_of_boxes);
+
+    while(state == 0 && (move = getPlayerInput()) != 5)
+    {
+        if(move == 6)
+        {
+            reset(actualLevel->player,actualLevel->s_player,actualLevel->boxes,actualLevel->s_boxes,actualLevel->num_of_boxes);
+        }
+        else
+        {
+            state = step(move,actualLevel->map,actualLevel->player,actualLevel->boxes,actualLevel->num_of_boxes,actualLevel->height,actualLevel->width);
+        }
+        UpdateDisplay(win,actualLevel->map,actualLevel->width,actualLevel->height,actualLevel->player,actualLevel->boxes, actualLevel->num_of_boxes);
+    }
+    delwin(win);
+}
+
+int main()
+{
+    initscr();
+    noecho();
+    cbreak();
+    start_color();
+    keypad(stdscr,TRUE);
+    //gameLoop(0);
+    
+    endwin();
+    return 0;
 }

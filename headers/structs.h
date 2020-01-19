@@ -16,10 +16,13 @@ typedef struct level
 {
     int index;
     char* name;
-    char **map;
+    
     int height;
     int width;
     int num_of_boxes;
-    movable player;
+    movable *player;
+    movable *s_player;
     movable *boxes;
+    movable *s_boxes;
+    char **map;
 }level;
