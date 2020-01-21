@@ -1,5 +1,11 @@
+
+DEF_OBJCTS = "./src/levelmanager.c" "./src/logic.c" -g -I "./headers/" -Wall -Wextra -Werror -std=c11
+
 terminal:
-	@gcc terminal.c "./src/levelmanager.c" "./src/logic.c" -g -o SokobanTerminal.sb -I "./headers/" -Wall -Wextra -Werror -std=c11 -lmenu -lncurses
-	
+	@gcc terminal.c $(DEF_OBJCTS) -o SokobanTerminal.sb -lmenu -lncurses
+
+graphical:
+	@gcc graphical.c $(DEF_OBJCTS) -o SokobanInSDL.sb -lSDL2 -lSDL2_image
+
 clean:
 	@rm *.sb

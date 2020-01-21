@@ -73,6 +73,14 @@ int getPlayerInput()
     return m;
 }
 
+void levelSelect()
+{
+    //WINDOW *l_select;
+    
+
+
+    //l_select = newwin(0,0,0,0);
+}
 
 void gameLoop(int index)
 {
@@ -89,23 +97,34 @@ void gameLoop(int index)
     int window_y = (LINES - window_height)/2;
     WINDOW *win = newwin(window_height,window_width,window_y,window_x);
 
+
+
+    const int height = actualLevel->height;
+    const int width = actualLevel->width;
+    movable *p = actualLevel->player;
+    movable *boxes = actualLevel->boxes;
+    const int numOfBoxes = actualLevel->num_of_boxes;
+    char **map = actualLevel->map;
+    movable *s_player = actualLevel->s_player;
+    movable *s_boxes = actualLevel->s_boxes;
+
+
     wborder(win, 0,0,0,0,0,0,0,0);
     int move = 0;
     int state = 0;
 
-    UpdateDisplay(win,actualLevel->map,actualLevel->width,actualLevel->height,actualLevel->player,actualLevel->boxes, actualLevel->num_of_boxes);
-
+    UpdateDisplay(win, map,width,height,p,boxes,numOfBoxes);
     while(state == 0 && (move = getPlayerInput()) != 5)
     {
         if(move == 6)
         {
-            reset(actualLevel->player,actualLevel->s_player,actualLevel->boxes,actualLevel->s_boxes,actualLevel->num_of_boxes);
+            reset(p,s_player,boxes,s_boxes,numOfBoxes);
         }
         else
         {
-            state = step(move,actualLevel->map,actualLevel->player,actualLevel->boxes,actualLevel->num_of_boxes,actualLevel->height,actualLevel->width);
+            state = step(move,map,p,boxes,numOfBoxes,height,width);
         }
-        UpdateDisplay(win,actualLevel->map,actualLevel->width,actualLevel->height,actualLevel->player,actualLevel->boxes, actualLevel->num_of_boxes);
+        UpdateDisplay(win, map,width,height,p,boxes,numOfBoxes);
     }
     delwin(win);
 }
@@ -117,7 +136,9 @@ int main()
     cbreak();
     start_color();
     keypad(stdscr,TRUE);
-    //gameLoop(0);
+    //wresize(stdscr,110,30);
+
+    gameLoop(3);
     
     endwin();
     return 0;
