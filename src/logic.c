@@ -7,26 +7,26 @@
 
 //Gameplay functions
 
-movable* checkForBox(movable *boxes, int numOfBoxes, const int x, const int y)
+movable* checkForBox(movable **boxes, int numOfBoxes, const int x, const int y)
 {
     movable* potentialBox = NULL;
     for(int i = 0; i < numOfBoxes; i++)
     {
-        if(boxes[i].x == x && boxes[i].y == y)
+        if(boxes[i]->x == x && boxes[i]->y == y)
         {
-            potentialBox = &(boxes[i]);
+            potentialBox = boxes[i];
         }
     }
     return potentialBox;
 }
 
 
-int checkWinCon(char **map, movable *boxes, int numOfboxes)
+int checkWinCon(char **map, movable **boxes, int numOfboxes)
 {
     int completed = 1;
     for(int i = 0; i < numOfboxes; i++)
     {
-        if(map[boxes[i].y][boxes[i].x] != '.')
+        if(map[boxes[i]->y][boxes[i]->x] != '.')
         {
             completed = 0;
             break;
@@ -35,19 +35,19 @@ int checkWinCon(char **map, movable *boxes, int numOfboxes)
     return completed;
 }
 
-void reset(movable *player, movable *startingPlayer, movable *boxes, movable *startingboxes, int numOfboxes)
+void reset(movable *player, movable *startingPlayer, movable **boxes, movable *startingboxes[], int numOfboxes)
 {
-    player->x = startingPlayer->x;
-    player->y = startingPlayer->y;
+    memcpy(player,startingPlayer, sizeof(movable));
     for(int i = 0; i < numOfboxes; i++)
     {
-        boxes[i].x = startingboxes[i].x;
-        boxes[i].y = startingboxes[i].y;
+        memcpy(boxes[i], startingboxes[i], sizeof(movable));
+        /*boxes[i]->x = startingboxes[i]->x;
+        boxes[i]->y = startingboxes[i]->y;*/
     }
 }
 
 
-int step(int move, char **map, movable *player, movable *boxes, int numOfBoxes, int height, int width)
+int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes, int height, int width)
 {
     int state = 0;
     int x = player->x;

@@ -3,10 +3,13 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+#define GAME_TEXTURES_AMOUNT 6
+#define MENU_TEXTURES_AMOUNT 4
+#define TILE_SIZE 32
 
-#define TEXTURES_AMOUNT 6
-enum ImageNames
+enum GameImageNames
 {
     BACKGOUND,
     FLOOR,
@@ -16,19 +19,29 @@ enum ImageNames
     HOLE
 };
 
-/**
-SDL_Window* InitLevelSelect(const int width, const int height);
 
-int InitGameScreen(const int width,const int height);
 
-SDL_Texture* LoadImages(SDL_Texture *textures[] ,SDL_Renderer *renderer);
-SDL_Surface *getImage(const char* filename,const SDL_PixelFormat *format);
 
-void closeLevel(SDL_Window *level);
-SDL_Window *closeGame(SDL_Window *levelselect);
-**/
-//Importing textures
+typedef struct WindowType
+{
+    SDL_Renderer *renderer;
+    SDL_Window *window;
+    
+}window_t;
 
+
+
+void destroyGraphicsAndRenderer(SDL_Texture *textures[], SDL_Renderer *renderer, const int amount)
+{
+    for(int i = 0; i < amount; i++)
+    {
+        SDL_DestroyTexture(textures[i]);
+    }
+    SDL_DestroyRenderer(renderer);
+}
+
+
+//Importing textures by filenames
 SDL_Texture *getTexture(const char* filename, SDL_Renderer *renderer)
 {
     SDL_Surface *image = IMG_Load(filename);
@@ -50,8 +63,10 @@ SDL_Texture *getTexture(const char* filename, SDL_Renderer *renderer)
     return texture;
 }
 
+
+
 //Loading images to memory
-int LoadImages(SDL_Texture *textures[] ,SDL_Renderer *renderer)
+int LoadGameImages(SDL_Texture *textures[] ,SDL_Renderer *renderer)
 {
     int good = 1;
     textures[BACKGOUND] = getTexture("assets/graphics/Background.png", renderer);
@@ -93,159 +108,210 @@ int LoadImages(SDL_Texture *textures[] ,SDL_Renderer *renderer)
     return good;
 }
 
-SDL_Window* InitLevelSelect(const int width, const int height)
-{
-    SDL_Window* mainWin = NULL;
-    if(SDL_Init(SDL_INIT_VIDEO) != 0)
-    {
-        printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
-        return NULL;
-    }
-    else
-    {
-        mainWin = SDL_CreateWindow("Sokoban Level Select", SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,width,height,SDL_WINDOW_SHOWN);
-        if(mainWin == NULL)
-        {
-            printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
-            return NULL;
-        }
-        else
-        {
-            return mainWin;
-        }
-    }
-
-
-    return NULL;
-}
-
-void *closeGame(SDL_Window *level, SDL_Texture *textures[], SDL_Renderer *renderer)
-{
-    for(int i = 0; i < TEXTURES_AMOUNT; i++)
-    {
-        SDL_DestroyTexture(textures[i]);
-    }
-    SDL_DestroyRenderer(renderer);
-
-    SDL_DestroyWindow(level);
-    IMG_Quit();
-}
-
-void PrintMap(SDL_Renderer *ren, SDL_Texture *textures[],const int width,const int height, movable *player,
-                     movable *boxes, int amount_of_boxes)
-{
-
-}
 
 void LevelSelect()
 {
-    int quit = 0;
-    int success = 1;
-    SDL_Window *game = InitLevelSelect(800,600);
-    SDL_Texture *images[TEXTURES_AMOUNT];
-    SDL_Renderer *renderer = NULL;
-    level* actualLevel = NULL;
-
-    const int height = actualLevel->height;
-    const int width = actualLevel->width;
-    movable *p = actualLevel->player;
-    movable *boxes = actualLevel->boxes;
-    const int numOfBoxes = actualLevel->num_of_boxes;
-    char **map = actualLevel->map;
-
-    movable *s_player = actualLevel->s_player;
-    movable *s_boxes = actualLevel->s_boxes;
-
-    int actualmove = 0;
-    if(game == NULL)
+    SDL_Window *selectWin;
+    SDL_Renderer *selectRen; 
+    SDL_Texture *textures[MENU_TEXTURES_AMOUNT];
+    
+    //Initialisation
+    
+    if(SDL_CreateWindowAndRenderer(800,600,SDL_WINDOW_BORDERLESS, &selectWin, &selectRen) != 0)
     {
-        printf( "Failed to initialize!\n" );
-        success =0;
+        printf("Initialization failed. %s", SDL_GetError());
+        return;
     }
-    else
+    //Loading images
+    if(LoadGameImages(textures,selectRen) == 0)
     {
-
-        renderer = SDL_CreateRenderer(game, -1,SDL_RENDERER_ACCELERATED);
-        if(renderer == NULL)
-        {
-            printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
-            success=0;
-        }
-        else
-        {
-            SDL_SetRenderDrawColor(renderer,0xFF,0xFF,0xFF,0xFF);
-            int imgFlags = IMG_INIT_PNG;
-            if(!(IMG_Init(imgFlags) & imgFlags))
-            {
-                printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() ); 
-                success=0;
-            }
-        }
-    }
-    if(success == 0)
-    {
-        closeGame(game,images,renderer);
+        printf("Image Loading error!");
         return;
     }
 
-    SDL_UpdateWindowSurface(game);
+}
 
-    SDL_Event e;
-    while(!quit)
+void PrintMap(char **map, const int width, const int height, movable *player, movable **boxes, int numOfBoxes, SDL_Renderer *ren, SDL_Texture *textures[])
+{
+    SDL_Rect  prev;
+    SDL_Rect  new;
+    new.w = width * TILE_SIZE;
+    new.h = height * TILE_SIZE;
+    new.x = (800 - new.w)/2;
+    new.y = (600 - new.h)/2;
+    SDL_RenderGetViewport(ren,&prev);
+    SDL_RenderClear(ren);
+    SDL_RenderCopy(ren,textures[BACKGOUND],NULL,NULL);
+    SDL_Rect rects[width*height];
+    SDL_RenderSetViewport(ren,&new);
+    SDL_Rect *actual = NULL;
+    int x,y;
+    int type;
+
+    //Drawing map
+    for(int i = 0; i < height; i++)
     {
-        while(SDL_PollEvent(&e) != 0)
+        for(int j = 0; j < width; j++)
         {
-            if(e.type == SDL_QUIT)
+            actual = &rects[i*height + j];
+            x = j * TILE_SIZE;
+            y = i * TILE_SIZE;
+            actual->x = x;
+            actual->y = y;
+            actual->h = TILE_SIZE;
+            actual->w = TILE_SIZE;
+            switch (map[i][j])
             {
-                quit = 1;
-            }
-            else if(e.type == SDL_KEYDOWN)
-            {
-                switch (e.key.keysym.sym)
-                {
-                case SDLK_UP:
-                    actualmove = 1;
-                    break;
-                
-                case SDLK_DOWN:
-                    actualmove = 2;
-                    break;
+            case '#':
+                type = WALL;
+                break;
+            
+            case ' ':
+                type = FLOOR;
+                break;
 
-                case SDLK_LEFT:
-                    actualmove = 3;
-                    break;
+            case '.':
+                type = HOLE;
+                break;
 
-                case SDLK_RIGHT:
-                    actualmove = 4;
-                    break; 
-                default:
-                    actualmove = 0;
-                    break;
-                }
-                if (actualmove>0)
-                {
-                    quit = step(actualmove,map,p,boxes,numOfBoxes,height,width);
-                }
-                else if (actualmove == -1)
-                {
-                    quit = 1;
-                }
-                else if (actualmove == -2)
-                {
-                    reset(p,s_player,boxes,s_boxes,numOfBoxes);
-                }
+            default:
+                break;
             }
+            SDL_RenderCopy(ren,textures[type], NULL, actual);
         }
-        SDL_RenderClear(renderer);
-        //PrintMap(renderer,images,width,height,p,boxes,numOfBoxes);
     }
 
+    //drawing Player
+    SDL_Rect BoxesRects[numOfBoxes];
+    for(int i = 0; i < numOfBoxes; i++)
+    {
+        actual = &BoxesRects[i];
+        actual->h = TILE_SIZE;
+        actual->w = TILE_SIZE;
+        actual->x = boxes[i]->x * TILE_SIZE;
+        actual->y = boxes[i]->y * TILE_SIZE;
+        SDL_RenderCopy(ren,textures[BOX], NULL,actual);
+    }
 
-    closeGame(game, images,renderer);
+    SDL_Rect playerRect;
+    playerRect.h = TILE_SIZE;
+    playerRect.w = TILE_SIZE;
+    playerRect.x = player->x * TILE_SIZE;
+    playerRect.y = player->y * TILE_SIZE;
+    SDL_RenderCopy(ren,textures[PLAYER], NULL, &playerRect);
+
+    SDL_RenderPresent(ren);
+    SDL_RenderSetViewport(ren,&prev);
+}
+
+void LevelGame(const int index)
+{   
+    SDL_Window *gamewin;
+    SDL_Renderer *gameRen; 
+    SDL_Texture *textures[GAME_TEXTURES_AMOUNT];
+    
+    //Initialisation
+    
+    if(SDL_CreateWindowAndRenderer(800,600, SDL_WINDOW_BORDERLESS, &gamewin, &gameRen) != 0)
+    {
+        printf("Initialization failed. %s", SDL_GetError());
+        return;
+    }
+    //Loading images
+    if(LoadGameImages(textures,gameRen) == 0)
+    {
+        printf("Image Loading error!");
+        return;
+    }
+
+    SDL_Event event;
+    int quit = 0;
+    int move = 0;
+    level *levelinfo = getLevelInfo(index);
+    if(levelinfo == NULL)
+    {
+        printf("Could not laod a level");
+        return;
+    }
+    //level info extraction
+    movable *player = levelinfo->player;
+    movable startingPlayerInfo; 
+    startingPlayerInfo.x = levelinfo->player->x;
+    startingPlayerInfo.y = levelinfo->player->y;
+    int numOfBoxes = levelinfo->num_of_boxes;
+    movable **boxes = levelinfo->boxes;
+    movable *startinBoxesInfo[numOfBoxes];
+    char **map = levelinfo->map;
+    const int height = levelinfo->height;
+    const int width = levelinfo->width;
+
+    for(int i = 0; i < numOfBoxes; i++)
+    {
+        startinBoxesInfo[i] = malloc(sizeof(movable));
+        memcpy(startinBoxesInfo[i], boxes[i], sizeof(movable));
+    }
+
+    PrintMap(map,width,height,player,boxes,numOfBoxes,gameRen,textures);
+    while(quit == 0)
+    {
+        
+        while(SDL_PollEvent(&event) != 0)
+        {
+            switch (event.key.keysym.sym)
+            {
+            case SDLK_q:
+                quit = 1;
+                move = 0;
+                break;
+            case SDLK_r:
+                move = 0;
+                reset(player,&startingPlayerInfo,boxes,startinBoxesInfo,numOfBoxes);
+                PrintMap(map,width,height,player,boxes,numOfBoxes,gameRen,textures);
+                break;
+            case SDLK_UP:
+                move = 1;
+                break;
+            
+            case SDLK_DOWN:
+                move = 2;
+                break;
+
+            case SDLK_LEFT:
+                move = 3;
+                break;
+
+            case SDLK_RIGHT:
+                move = 4;
+                break;
+            default:
+                move = 0;
+                break;
+            }
+            if(move > 0)
+            {
+                quit = step(move,map,player,boxes,numOfBoxes,height,width);
+                PrintMap(map,width,height,player,boxes,numOfBoxes,gameRen,textures);
+            }
+            SDL_WaitEventTimeout(&event,250);
+            
+        }
+    }
+
+    destroyGraphicsAndRenderer(textures,gameRen,GAME_TEXTURES_AMOUNT);
+    freeLevel(levelinfo);
+    SDL_DestroyWindow(gamewin);
 }
 
 int main()
 {
-    LevelSelect();
+    if(SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+        printf("Could not initialize SDL");
+        return 0;
+    }
+    LevelGame(1);
+
+    IMG_Quit();
+    SDL_Quit();
     return 0;
 }

@@ -21,8 +21,6 @@ typedef struct level
     int width;
     int num_of_boxes;
     movable *player;
-    movable *s_player;
-    movable *boxes;
-    movable *s_boxes;
+    movable **boxes;
     char **map;
 }level;
