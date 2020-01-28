@@ -346,6 +346,7 @@ void PrintMap(char **map, const int width, const int height, movable *player, mo
             case '0':
                 type = 0;
                 break;
+                
             default:
                 break;
             }

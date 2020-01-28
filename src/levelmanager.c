@@ -68,14 +68,19 @@ level* getLevelInfo(const int index) //Indexowanie od 1
     l->num_of_boxes = 0;
     int tempwidth = 0;
     int tempheight = 0;
+    int maxWidth = 0;
     
-    char temparr[MAX_SIZE][MAX_SIZE];
+    char temparr[MAX_SIZE][MAX_SIZE+1];
     movable tempBoxes[MAX_BOXES_AMOUNT];
     char c = fgetc(fp);
     int levelIndex;
+    int started = 0;
     while(c!=';')
     {
+
+        if(tempwidth > maxWidth) maxWidth = tempwidth;
         tempwidth = 0;
+        started = 0;
         for(int i = 0; i < MAX_SIZE && c != '\n'; i++)
         {
             
@@ -112,10 +117,22 @@ level* getLevelInfo(const int index) //Indexowanie od 1
                 default:
                 break;
             }
-            temparr[tempheight][tempwidth] = c;
+            if(!started && c == '#')
+            {
+                started = 1;
+            }
+            if(!started)
+            {
+                temparr[tempheight][tempwidth] = '0';
+            }
+            else
+            {
+                temparr[tempheight][tempwidth] = c;
+            }
             tempwidth++;
             c = fgetc(fp);
         }
+        temparr[tempheight][tempwidth] = '\n';
         tempheight++;
         c=fgetc(fp);
     }
@@ -126,7 +143,7 @@ level* getLevelInfo(const int index) //Indexowanie od 1
     }
 
     l->height = tempheight;
-    l->width = tempwidth;
+    l->width = maxWidth;
 
 
     int a = l->num_of_boxes;
@@ -140,16 +157,28 @@ level* getLevelInfo(const int index) //Indexowanie od 1
     }
 
     l->map = malloc(sizeof(char*) * tempheight);
+    int flag = 0;
     for(int i = 0; i < tempheight; i++)
     {
-        l->map[i] = malloc(sizeof(char) * tempwidth);
-        for(int j = 0; j < tempwidth; j++)
+        flag = 0;
+        l->map[i] = malloc(sizeof(char) * maxWidth);
+        for(int j = 0; j < maxWidth; j++)
         {
-            l->map[i][j] = temparr[i][j];
+
+            if(temparr[i][j] == '\n')
+            {
+                flag = 1;
+            }
+            if(flag)
+            {
+                l->map[i][j] = '0';
+            }
+            else
+            {
+                l->map[i][j] = temparr[i][j];
+            } 
         }
     }
-
-    char* s = l->map[4];
     fclose(fp);
     return l;
 }
