@@ -4,8 +4,6 @@
 #include <menu.h>
 #include <string.h>
 
-void gameLoop(int index);
-
 //Diplaying everything related to game
 void UpdateDisplay(WINDOW *win, char **arr, int w, int h, movable *pl, movable **boxes, int numofboxes)
 {
@@ -213,6 +211,7 @@ void gameLoop(int index)
     WINDOW* helpwin = newwin(4, 32, 0 ,0);
     mvwprintw(helpwin, 0, 0, "R - reset level\nQ - Exit\nArrow key - move");
     wrefresh(helpwin);
+    //Getting and reacting on player input
     UpdateDisplay(win, map,width,height,p,boxes,numOfBoxes);
     while(state == 0 && (move = getPlayerInput()) != 5)
     {
@@ -233,6 +232,7 @@ void gameLoop(int index)
 
 int main()
 {
+    //Ncurses initialisations
     initscr();
     noecho();
     cbreak();
@@ -242,6 +242,7 @@ int main()
     int screen_x = getmaxx(stdscr);
     int screen_y = getmaxy(stdscr);
 
+    //Checking the height of the screen
     if(screen_x < 32 || screen_y < 32)
     {
         printw("Your terminal window is too small to open game. Minimal size is 32x32\n");
@@ -255,6 +256,7 @@ int main()
     {
         levelSelect();
     }
+    //Clearing ncurses
     curs_set(1);
     endwin();
     return 0;

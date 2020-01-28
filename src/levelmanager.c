@@ -8,7 +8,7 @@
 #define MAX_BOXES_AMOUNT 16
 
 
-
+//Deleting inported level
 void freeLevel(level *level)
 {
     free(level->player);
@@ -25,7 +25,7 @@ void freeLevel(level *level)
     free(level);
 }
 
-
+//Getting number of levels
 int getLevelAmount()
 {
     int counter = 0;
@@ -43,7 +43,8 @@ int getLevelAmount()
     return counter;
 }
 
-level* getLevelInfo(const int index) //Indexowanie od 1
+//Importing level info
+level* getLevelInfo(const int index) //Indexes start from 1
 {
     if(index < 1) return NULL;
     FILE *fp = fopen(MAPS_PATH, "r");
@@ -57,7 +58,7 @@ level* getLevelInfo(const int index) //Indexowanie od 1
         fgets(line,MAX_SIZE*2,fp);
         if(line[0] == ';')counter++; 
     }
-    if(index > 1) fgets(line,MAX_SIZE*2,fp); //pozbywam się linii pustej (wszędze poza 0 poziomem)
+    if(index > 1) fgets(line,MAX_SIZE*2,fp); //Deleting blank line expect 1st level
     
     free(line);
 
