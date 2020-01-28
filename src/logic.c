@@ -41,12 +41,10 @@ void reset(movable *player, movable *startingPlayer, movable **boxes, movable *s
     for(int i = 0; i < numOfboxes; i++)
     {
         memcpy(boxes[i], startingboxes[i], sizeof(movable));
-        /*boxes[i]->x = startingboxes[i]->x;
-        boxes[i]->y = startingboxes[i]->y;*/
     }
 }
 
-
+//Making a single step
 int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes, int height, int width)
 {
     int state = 0;
@@ -84,7 +82,7 @@ int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes,
         break;
     }
 
-
+    //Checking for box on a field player wants to step on
     if(map[new_y][new_x] != '#')
     {
         movable* box = checkForBox(boxes, numOfBoxes, new_x, new_y);
@@ -94,7 +92,8 @@ int step(int move, char **map, movable *player, movable **boxes, int numOfBoxes,
             player->y = new_y;
         }
         else
-        {
+
+        {   //Checking for potential box on a field previous box would be pushed on
             movable* box2 =  checkForBox(boxes, numOfBoxes, box_x, box_y);
             if(box2 == NULL && map[box_y][box_x] != '#')
             {

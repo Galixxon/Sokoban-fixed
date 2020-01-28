@@ -48,16 +48,16 @@ level* getLevelInfo(const int index) //Indexowanie od 1
     if(index < 1) return NULL;
     FILE *fp = fopen(MAPS_PATH, "r");
     if(fp == NULL) return NULL;
-    char* line = malloc(sizeof(char)* MAX_SIZE);
+    char* line = malloc(sizeof(char)* MAX_SIZE*2);
 
     int mapPoint = index-1;
     int counter = 0;
     while(counter < mapPoint)
     {
-        fgets(line,MAX_SIZE,fp);
+        fgets(line,MAX_SIZE*2,fp);
         if(line[0] == ';')counter++; 
     }
-    if(index > 1) fgets(line,MAX_SIZE,fp); //pozbywam się linii pustej (wszędze poza 0 poziomem)
+    if(index > 1) fgets(line,MAX_SIZE*2,fp); //pozbywam się linii pustej (wszędze poza 0 poziomem)
     
     free(line);
 
@@ -83,7 +83,7 @@ level* getLevelInfo(const int index) //Indexowanie od 1
         if(tempwidth > maxWidth) maxWidth = tempwidth;
         tempwidth = 0;
         started = 0;
-        for(int i = 0; i < MAX_SIZE && c != '\n'; i++)
+        for(int i = 0; c != '\n'; i++)
         {
             
             switch(c)
@@ -133,15 +133,14 @@ level* getLevelInfo(const int index) //Indexowanie od 1
             }
             tempwidth++;
             c = fgetc(fp);
+            if(tempheight > MAX_SIZE || tempwidth > MAX_SIZE || l->num_of_boxes > MAX_BOXES_AMOUNT)
+            {
+                return NULL;
+            }
         }
         temparr[tempheight][tempwidth] = '\n';
         tempheight++;
         c=fgetc(fp);
-    }
-    if(tempheight > MAX_SIZE || tempwidth > MAX_SIZE || l->num_of_boxes > MAX_BOXES_AMOUNT)
-    {
-        printf("Bad level format");
-        return NULL;
     }
 
     l->height = tempheight;
