@@ -7,6 +7,8 @@
 #define MAX_SIZE 32
 #define MAX_BOXES_AMOUNT 16
 
+
+
 void freeLevel(level *level)
 {
     free(level->player);

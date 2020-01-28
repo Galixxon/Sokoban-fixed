@@ -4,41 +4,53 @@
 #include <menu.h>
 #include <string.h>
 
-void UpdateDisplay(WINDOW *win, char **arr, int w, int h, movable *pl, movable *boxes, int numofboxes)
+void gameLoop(int index);
+
+void UpdateDisplay(WINDOW *win, char **arr, int w, int h, movable *pl, movable **boxes, int numofboxes)
 {
     wmove(win,0,0);
     wrefresh(win);
-    char tempPlayer = arr[pl->y][pl->x];
-    char tempBoxes[numofboxes];
-    char boxChar = boxes[0].digit;
-    for(int i = 0; i < numofboxes; i++)
-    {
-        tempBoxes[i] = arr[boxes[i].y][boxes[i].x];
-        arr[boxes[i].y][boxes[i].x] = boxChar;
-    }
-
-    arr[pl->y][pl->x] = pl->digit;
-
     //Drawing
-    for(int i = 0; i < numofboxes; i++)
-    {
-        arr[boxes[i].y][boxes[i].x] = boxes[i].digit;
-    }
-
+    int color = 0;
+    char c;
     for(int i = 0; i < h; i++)
     {
         for(int j = 0; j < w; j++)
         {
-            waddch(win,arr[i][j]);
+            
+            c = arr[i][j];
+            switch (c)
+            {
+            case '.':
+                color = 1;
+                break;
+            case '#':
+                color = 2;
+                break;        
+            default:
+                color = 0;
+                break;
+            }
+            wattrset(win,COLOR_PAIR(color));
+            if(c != '0')
+            {
+                waddch(win,c);
+            }
+            else
+            {
+                waddch(win,' ');
+            }
+            
         }
     }
-    wrefresh(win);
-    arr[pl->y][pl->x] = tempPlayer;
-
-    for(int i = 0; i < numofboxes; i++)
+    wattrset(win,COLOR_PAIR(3));
+    for(int i= 0; i < numofboxes; i++)
     {
-        arr[boxes[i].y][boxes[i].x] = tempBoxes[i];
+        mvwaddch(win,boxes[i]->y,boxes[i]->x, boxes[i]->digit);
     }
+    wattrset(win,COLOR_PAIR(4));
+    mvwaddch(win,pl->y,pl->x,pl->digit);
+    wrefresh(win);
 }
 //--------------------------------------------------------------
 
@@ -75,15 +87,77 @@ int getPlayerInput()
 
 void levelSelect()
 {
-    //WINDOW *l_select;
-    
 
+    ITEM **levellist;
+    MENU *menu;
+    ITEM *current;
+    int levelamount = getLevelAmount();
+    levellist = calloc(levelamount+1,sizeof(ITEM*));
+    int size = 0;
+    int temp = levelamount;
+    int c;
+    while(temp > 0)
+    {
+        size++;
+        temp/=10;
+    }
+    char* levelString[levelamount];
+    char label[size+1];
+    for(int i = 0; i < levelamount;i++)
+    {
+        levelString[i] = malloc(sizeof(char) * (size + 8));
+        strcpy(levelString[i], "Level ");
+        sprintf(label,"%d", i+1);
+        strcat(levelString[i], label);
+        levellist[i] = new_item(levelString[i],"*");
+    }
+    levellist[levelamount] = (ITEM*)NULL;
 
-    //l_select = newwin(0,0,0,0);
+    menu = new_menu(levellist);
+    mvprintw(LINES - 2, 0, "Press Q to Exit");
+    post_menu(menu);
+    refresh();
+    while((c=getch())!= 'q')
+    {
+        current = current_item(menu);
+        switch (c)
+        {
+        case KEY_DOWN:
+            menu_driver(menu,REQ_DOWN_ITEM);
+            break;
+        
+        case KEY_UP:
+            menu_driver(menu,REQ_UP_ITEM);
+            break;
+        case 10:
+            unpost_menu(menu);
+            refresh();
+            gameLoop((item_index(current_item(menu)))+1);
+            post_menu(menu);
+            refresh();
+            break;
+        default:
+            break;
+        }
+        
+
+    }
+    for(int i = 0; i < levelamount;i++)
+    {
+        free_item(levellist[i]);
+        free(levelString[i]);
+    }
+    free_menu(menu);
 }
 
 void gameLoop(int index)
 {
+
+    init_pair(1,COLOR_GREEN,COLOR_BLACK);
+    init_pair(2,COLOR_CYAN,COLOR_BLACK);
+    init_pair(3,COLOR_RED,COLOR_BLACK);
+    init_pair(4,COLOR_YELLOW,COLOR_BLACK);
+
     level* actualLevel = getLevelInfo(index);
     if(actualLevel == NULL)
     {
@@ -91,25 +165,22 @@ void gameLoop(int index)
         getch();
         return;
     }
+
     int window_width = actualLevel->width;
     int window_height = actualLevel->height;
     int window_x = (COLS - window_width)/2;
     int window_y = (LINES - window_height)/2;
     WINDOW *win = newwin(window_height,window_width,window_y,window_x);
-
+    
 
 
     const int height = actualLevel->height;
     const int width = actualLevel->width;
     movable *p = actualLevel->player;
-    movable *boxes = actualLevel->boxes;
+    movable **boxes = actualLevel->boxes;
     const int numOfBoxes = actualLevel->num_of_boxes;
     char **map = actualLevel->map;
     
-    
-
-
-    wborder(win, 0,0,0,0,0,0,0,0);
     int move = 0;
     int state = 0;
 
@@ -136,10 +207,10 @@ int main()
     cbreak();
     start_color();
     keypad(stdscr,TRUE);
-    //wresize(stdscr,110,30);
+    curs_set(0);
 
-    gameLoop(3);
-    
+    levelSelect();
+    curs_set(1);
     endwin();
     return 0;
 }
