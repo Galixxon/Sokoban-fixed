@@ -196,7 +196,8 @@ void gameLoop(int index)
     movable **boxes = actualLevel->boxes;
     const int numOfBoxes = actualLevel->num_of_boxes;
     char **map = actualLevel->map;
-    movable startingPlayerInfo; 
+    movable startingPlayerInfo;
+    startingPlayerInfo.digit = '@';
     startingPlayerInfo.x = actualLevel->player->x;
     startingPlayerInfo.y = actualLevel->player->y;
     movable *startinBoxesInfo[numOfBoxes];
