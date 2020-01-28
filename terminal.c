@@ -105,8 +105,8 @@ void gameLoop(int index)
     movable *boxes = actualLevel->boxes;
     const int numOfBoxes = actualLevel->num_of_boxes;
     char **map = actualLevel->map;
-    movable *s_player = actualLevel->s_player;
-    movable *s_boxes = actualLevel->s_boxes;
+    
+    
 
 
     wborder(win, 0,0,0,0,0,0,0,0);
@@ -118,7 +118,7 @@ void gameLoop(int index)
     {
         if(move == 6)
         {
-            reset(p,s_player,boxes,s_boxes,numOfBoxes);
+            //reset(p,s_player,boxes,s_boxes,numOfBoxes);
         }
         else
         {

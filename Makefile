@@ -5,7 +5,7 @@ terminal:
 	@gcc terminal.c $(DEF_OBJCTS) -o SokobanTerminal.sb -lmenu -lncurses
 
 graphical:
-	@gcc graphical.c $(DEF_OBJCTS) -o SokobanInSDL.sb -lSDL2 -lSDL2_image
+	@gcc graphical.c $(DEF_OBJCTS) -o SokobanInSDL.sb -lSDL2 -lSDL2_image -lSDL2_ttf
 
 clean:
 	@rm *.sb
