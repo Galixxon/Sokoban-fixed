@@ -218,6 +218,7 @@ void gameLoop(int index)
         if(move == 6)
         {
             reset(p,&startingPlayerInfo,boxes,startinBoxesInfo,numOfBoxes);
+            wrefresh(win);
         }
         else
         {

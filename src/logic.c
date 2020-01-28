@@ -42,6 +42,7 @@ void reset(movable *player, movable *startingPlayer, movable **boxes, movable *s
     {
         memcpy(boxes[i], startingboxes[i], sizeof(movable));
     }
+    player->digit = '@';
 }
 
 //Making a single step
