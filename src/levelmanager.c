@@ -3,6 +3,7 @@
 #include<string.h>
 
 #include "levelmanager.h"
+
 #define MAPS_PATH "assets/maps.txt"
 #define MAX_SIZE 32
 #define MAX_BOXES_AMOUNT 16

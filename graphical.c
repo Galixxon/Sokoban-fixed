@@ -1,13 +1,18 @@
+#include "logic.h"
+#include "levelmanager.h"
 #include "graphical.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #define MENU_HEIGHT 600
 #define MENU_WIDTH 800
 #define SCREEN_HEIGHT 768
 #define SCREEN_WIDTH 1024
+#define FONT_SIZE 28
+#define BUTTON_SIZE 64
 
+#define FONT_PATH "assets/Fonts/MenuFont.ttf"
 
 enum Images
 {
@@ -32,20 +37,20 @@ enum Move
     RIGHT
 };
 
-typedef struct tile
+struct tile
 {
     SDL_Texture *tileText;
     int x,y;
     int size;
-}tile;
+};
 
-typedef struct button
+struct button
 {
     SDL_Texture *label;
     SDL_Rect pos;
     SDL_Rect textPos;
     int index;
-}menu_button;
+};
 
 int checkButtonClickEvent(SDL_Rect *buttonArea)
 {
@@ -93,7 +98,7 @@ int SdlInit()
     }
     if(TTF_Init() == -1)
     {
-        printf("Fonts fucked up\n");
+        printf("Could not initialize TTF module\n");
         return 0;
     }
     return 1;
@@ -105,7 +110,7 @@ SDL_Texture *readImageFromPath(const char* path, SDL_Renderer *renderer)
     SDL_Texture *texture = NULL;
     if(image ==NULL)
     {
-        printf("Image could not be loaded %s! SDL Errpr: %s\n", path,SDL_GetError());
+        printf("Image could not be loaded %s! SDL Error: %s\n", path,SDL_GetError());
     }
     else
     {
@@ -175,10 +180,8 @@ void SDLClose()
 }
 
 
-void setButtonLabel(SDL_Renderer *ren,menu_button *btn, char* label, int size)
+void setButtonLabel(SDL_Renderer *ren,menu_button *btn, TTF_Font *font, char* label)
 {
-    const char* FONT_PATH = "assets/Fonts/MenuFont.ttf";
-    TTF_Font *font = TTF_OpenFont(FONT_PATH, size);
     SDL_Color color = {0,0,0,0};
     SDL_Surface *temp = TTF_RenderText_Solid(font,label,color);
     btn->label = SDL_CreateTextureFromSurface(ren,temp);
@@ -218,27 +221,22 @@ void setPageButtonRects(menu_button *button, int x,int y, int w, int h)
 }
 
 
-void setAdditionalButtons(SDL_Window *win, SDL_Renderer *renderer, menu_button *prev, menu_button *next)
+void setAdditionalButtons(SDL_Window *win, SDL_Renderer *renderer, TTF_Font *font, menu_button *prev, menu_button *next)
 {
     int w,h;
     SDL_GetWindowSize(win,&w,&h);
-
-    const int BUTTON_SIZE = 64;
-    const int LABEL_SIZE = 28;
-    
 
     setPageButtonRects(prev, (w - 7*BUTTON_SIZE)/2 ,h-1.25*BUTTON_SIZE,3*BUTTON_SIZE,BUTTON_SIZE);
     setPageButtonRects(next, (w - 7*BUTTON_SIZE)/2 + 4*BUTTON_SIZE ,h-1.25*BUTTON_SIZE,3*BUTTON_SIZE,BUTTON_SIZE);
-    setButtonLabel(renderer,prev, "Previous", LABEL_SIZE);
-    setButtonLabel(renderer,next, "Next", LABEL_SIZE);
+    setButtonLabel(renderer,prev, font, "Previous");
+    setButtonLabel(renderer,next, font, "Next");
 }
 
-void updateSelectionButtons(SDL_Window *win,SDL_Renderer *renderer, menu_button buttons[],int startingIndex, int rows, int columns, int numOfLevels)
+void updateSelectionButtons(SDL_Window *win,SDL_Renderer *renderer, TTF_Font *font, menu_button buttons[],int startingIndex, int rows, int columns, int numOfLevels)
 {
     int w,h;
     SDL_GetWindowSize(win,&w,&h);
-    const int BUTTON_SIZE = 64;
-    const int LABEL_SIZE = 28;
+
     int startx = (w - 7*BUTTON_SIZE)/2;
     int starty = h - 8.5*BUTTON_SIZE;
 
@@ -267,7 +265,7 @@ void updateSelectionButtons(SDL_Window *win,SDL_Renderer *renderer, menu_button 
             buttons[labelNumber].index = labelNumber + startingIndex;
             sprintf(label,"%d", buttons[labelNumber].index);
             setButtonRects(&(buttons[labelNumber]), startx + 1.5*BUTTON_SIZE*j,starty + 1.5*BUTTON_SIZE*i,BUTTON_SIZE);
-            setButtonLabel(renderer,&(buttons[labelNumber]), label, LABEL_SIZE);
+            setButtonLabel(renderer,&(buttons[labelNumber]), font, label);
         }
     }
 }
@@ -299,10 +297,10 @@ void PrintTile(SDL_Renderer *renderer, tile tile, int tile_size)
 
 void PrintMap(char **map, const int width, const int height, movable *player, movable **boxes, int numOfBoxes, SDL_Renderer *ren, SDL_Texture *textures[])
 {
-    int TILE_SIZE = 64;
-    while(TILE_SIZE*width > SCREEN_WIDTH || TILE_SIZE*height > SCREEN_HEIGHT)
+    int tileSize = 64;
+    while(tileSize*width > SCREEN_WIDTH || tileSize*height > SCREEN_HEIGHT)
     {
-        TILE_SIZE -= 8;
+        tileSize -= 8;
     }
 
     SDL_RenderClear(ren);
@@ -310,8 +308,8 @@ void PrintMap(char **map, const int width, const int height, movable *player, mo
     tile tiles[width*height];
     SDL_Rect  prev;
     SDL_Rect new;
-    new.w = width * TILE_SIZE;
-    new.h = height * TILE_SIZE;
+    new.w = width * tileSize;
+    new.h = height * tileSize;
     new.x = (SCREEN_WIDTH - new.w)/2;
     new.y = (SCREEN_HEIGHT - new.h)/2;
     SDL_RenderGetViewport(ren,&prev);
@@ -323,8 +321,8 @@ void PrintMap(char **map, const int width, const int height, movable *player, mo
     {
         for(int j = 0; j < width; j++)
         {
-            tiles[width * i + j].x = j * TILE_SIZE;
-            tiles[width * i + j].y = i * TILE_SIZE;
+            tiles[width * i + j].x = j * tileSize;
+            tiles[width * i + j].y = i * tileSize;
             switch (map[i][j])
             {
             case '#':
@@ -349,7 +347,7 @@ void PrintMap(char **map, const int width, const int height, movable *player, mo
             if(type!=0)
                 {
                     tiles[width*i + j].tileText = textures[type];
-                    PrintTile(ren,tiles[width*i + j], TILE_SIZE);
+                    PrintTile(ren,tiles[width*i + j], tileSize);
                 }
         }
     }
@@ -359,16 +357,16 @@ void PrintMap(char **map, const int width, const int height, movable *player, mo
     for(int i = 0; i < numOfBoxes; i++)
     {
         Boxes[i].tileText = textures[BOX];
-        Boxes[i].x = boxes[i]->x * TILE_SIZE;
-        Boxes[i].y = boxes[i]->y * TILE_SIZE;
-        PrintTile(ren,Boxes[i], TILE_SIZE);
+        Boxes[i].x = boxes[i]->x * tileSize;
+        Boxes[i].y = boxes[i]->y * tileSize;
+        PrintTile(ren,Boxes[i], tileSize);
     }
 
     tile playerTile;
     playerTile.tileText = textures[PLAYER];
-    playerTile.x = player->x * TILE_SIZE;
-    playerTile.y = player->y * TILE_SIZE;
-    PrintTile(ren,playerTile,TILE_SIZE);
+    playerTile.x = player->x * tileSize;
+    playerTile.y = player->y * tileSize;
+    PrintTile(ren,playerTile,tileSize);
 
     SDL_RenderSetViewport(ren,&prev);
     SDL_RenderPresent(ren);
@@ -425,8 +423,7 @@ void Game(int index)
     
     while(quit == 0)
     {
-        
-        while(SDL_PollEvent(&event) != 0)
+        while(SDL_PollEvent(&event))
         {
             switch (event.key.keysym.sym)
             {
@@ -436,9 +433,7 @@ void Game(int index)
                 break;
             case SDLK_r:
                 move = 0;
-                
                 reset(player,&startingPlayerInfo,boxes,startinBoxesInfo,numOfBoxes);
-
                 PrintMap(map,width,height,player,boxes,numOfBoxes,renderer,assets);
                 break;
             case SDLK_UP:
@@ -466,8 +461,7 @@ void Game(int index)
                 quit = step(move,map,player,boxes,numOfBoxes,height,width);
                 PrintMap(map,width,height,player,boxes,numOfBoxes,renderer,assets);
             }
-            SDL_WaitEventTimeout(&event,250);
-            
+            SDL_WaitEventTimeout(&event,150);
         }
     }
 
@@ -480,14 +474,25 @@ void Game(int index)
 
 void LevelSelect()
 {
-    SDL_Window *gameWindow;
-    SDL_Renderer *renderer;
-    if(SDL_CreateWindowAndRenderer(MENU_WIDTH,MENU_HEIGHT, SDL_WINDOW_SHOWN, &gameWindow, &renderer) != 0)
+    //Getting number of all levels in file and checking whether file is empty
+    int numOfLevels = getLevelAmount();
+    if(numOfLevels < 1)
     {
-        printf("Initialization failed. %s", SDL_GetError());
+        printf("File with levels is empty. Fill it with levels.\n");
         return;
     }
+
+    SDL_Window *gameWindow;
+    SDL_Renderer *renderer;
+    //Creating level select window
+    if(SDL_CreateWindowAndRenderer(MENU_WIDTH,MENU_HEIGHT, SDL_WINDOW_SHOWN, &gameWindow, &renderer) != 0)
+    {
+        printf("Level select window initialization failed. %s", SDL_GetError());
+        return;
+    }
+
     SDL_Texture *assets[TOTAL_TEXTURE_AMOUNT];
+    //Loading all images since starting a program
     if(LoadGameImages(assets,renderer) == 0)
     {
         printf("Loading images failed.");
@@ -504,11 +509,12 @@ void LevelSelect()
     const int rows = 5;
     menu_button buttons[25];
     menu_button next,prev;
-    setAdditionalButtons(gameWindow,renderer,&prev, &next);
+    TTF_Font *font = TTF_OpenFont(FONT_PATH, FONT_SIZE);
+    
+    setAdditionalButtons(gameWindow,renderer,font,&prev, &next);
 
-    int numOfLevels = getLevelAmount();
 
-    updateSelectionButtons(gameWindow,renderer,buttons,1,5,5,numOfLevels);
+    updateSelectionButtons(gameWindow,renderer,font,buttons,1,5,5,numOfLevels);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer,assets[BACKGROUND], NULL,NULL);
     renderButtons(buttons, next, prev, renderer,5,5,assets[LEVEL_BUTTON]);
@@ -519,60 +525,55 @@ void LevelSelect()
     {
         while(SDL_PollEvent(&e))
         {
-            if(e.type == SDL_QUIT)
+            switch(e.type)
             {
-                quit = 1;
-            }
-            else if(e.type == SDL_MOUSEBUTTONDOWN)
-            {
-                for(int i = 0; i< numOfDrawnButtons; i++)
-                {
-                    if(checkButtonClickEvent(&(buttons[i].pos)))
+                case SDL_QUIT:
+                    quit = 1;
+                    break;
+
+                case SDL_MOUSEBUTTONDOWN:
+
+                    for(int i = 0; i< numOfDrawnButtons; i++)
                     {
-                        playindex = buttons[i].index;
-                    }
-                    else 
-                    {
-                        if(startingIndex - numOfDrawnButtons > 0 && checkButtonClickEvent(&prev.pos))
+                        if(checkButtonClickEvent(&(buttons[i].pos)))
                         {
-                            startingIndex -= numOfDrawnButtons;
-                            updateSelectionButtons(gameWindow,renderer,buttons,startingIndex,rows,cols,numOfLevels);
-                            SDL_RenderClear(renderer);
-                            SDL_RenderCopy(renderer,assets[BACKGROUND], NULL,NULL);
-                            renderButtons(buttons, next, prev, renderer,5,5,assets[LEVEL_BUTTON]);
-                            SDL_RenderPresent(renderer);
-                            SDL_WaitEventTimeout(&e,600);
-                        }
-                        else if(startingIndex + numOfDrawnButtons < numOfLevels && checkButtonClickEvent(&next.pos))
-                        {
-                            startingIndex += numOfDrawnButtons;
-                            updateSelectionButtons(gameWindow,renderer,buttons,startingIndex,rows,cols,numOfLevels);
-                            SDL_RenderClear(renderer);
-                            SDL_RenderCopy(renderer,assets[BACKGROUND], NULL,NULL);
-                            renderButtons(buttons, next, prev, renderer,5,5,assets[LEVEL_BUTTON]);
-                            SDL_RenderPresent(renderer);
-                            SDL_WaitEventTimeout(&e,600);
+                            playindex = buttons[i].index;
                         }
                     }
-                }
-                if(playindex!=0)
-                {
-                    SDL_HideWindow(gameWindow);
-                    SDL_Delay(500);
-                    Game(playindex);
-                    SDL_ShowWindow(gameWindow);
-                    SDL_RenderPresent(renderer);
-                    playindex = 0;
-                }
+                        
+                    if(startingIndex - numOfDrawnButtons > 0 && checkButtonClickEvent(&prev.pos))
+                    {
+                        startingIndex -= numOfDrawnButtons;
+                        updateSelectionButtons(gameWindow,renderer,font,buttons,startingIndex,rows,cols,numOfLevels);
+                        SDL_RenderClear(renderer);
+                        SDL_RenderCopy(renderer,assets[BACKGROUND], NULL,NULL);
+                        renderButtons(buttons, next, prev, renderer,5,5,assets[LEVEL_BUTTON]);
+                        SDL_RenderPresent(renderer);
+                    }
+                    else if(startingIndex + numOfDrawnButtons < numOfLevels && checkButtonClickEvent(&next.pos))
+                    {
+                        startingIndex += numOfDrawnButtons;
+                        updateSelectionButtons(gameWindow,renderer,font,buttons,startingIndex,rows,cols,numOfLevels);
+                        SDL_RenderClear(renderer);
+                        SDL_RenderCopy(renderer,assets[BACKGROUND], NULL,NULL);
+                        renderButtons(buttons, next, prev, renderer,5,5,assets[LEVEL_BUTTON]);
+                        SDL_RenderPresent(renderer); 
+                    }
+
+                    if(playindex!=0)
+                    {
+                        SDL_HideWindow(gameWindow);
+                        SDL_Delay(500);
+                        Game(playindex);
+                        SDL_ShowWindow(gameWindow);
+                        SDL_RenderPresent(renderer);
+                        playindex = 0;
+                    }
+                    break;  
             }
-            
-        }
+        }  
     }
-    
-
-
 }
-
 
 int main()
 {

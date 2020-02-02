@@ -1,3 +1,6 @@
+#ifndef STRUCTS_H_
+#define STRUCTS_H_
+
 typedef struct movable
 {
     char digit;
@@ -24,3 +27,5 @@ typedef struct level
     movable **boxes;
     char **map;
 }level;
+
+#endif

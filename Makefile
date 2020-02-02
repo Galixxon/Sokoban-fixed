@@ -1,5 +1,5 @@
 
-DEF_OBJCTS = "./src/levelmanager.c" "./src/logic.c" -g -I "./headers/" -Wall -Wextra -std=c11
+DEF_OBJCTS = "./src/levelmanager.c" "./src/logic.c" -g -I "./headers/" -Wall -Wextra -Werror -xc -std=c11
 
 terminal:
 	@gcc terminal.c $(DEF_OBJCTS) -o SokobanTerminal.sb -lmenu -lncurses

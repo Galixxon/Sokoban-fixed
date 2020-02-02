@@ -1,4 +1,6 @@
 #include "terminal.h"
+#include "levelmanager.h"
+#include "logic.h"
 
 #include <stdlib.h>
 #include <menu.h>
@@ -96,6 +98,16 @@ void levelSelect()
     MENU *menu;
 
     int levelamount = getLevelAmount();
+    if(levelamount < 1)
+    {
+        printw("File with levels is empty. Fill it with levels.\n");
+        attron(A_BLINK);
+        printw("Press any key  to continue...");
+        refresh();
+        getch();
+        attroff(A_BLINK);
+        return;
+    }
     levellist = calloc(levelamount+1,sizeof(ITEM*));
     int size = 0;
     
